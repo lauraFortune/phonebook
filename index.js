@@ -2,8 +2,13 @@ const express = require('express')
 const app = express()
 const morgan = require('morgan')
 
+// define morgan token
+morgan.token('body', (req) => {
+    return JSON.stringify(req.body)
+}) 
+
 app.use(express.json())
-app.use(morgan('tiny'))
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body')) // body token defined above - logs request body data
 
 let persons = [
     { 
@@ -108,3 +113,4 @@ const PORT = 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
+
