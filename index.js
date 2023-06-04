@@ -29,7 +29,7 @@ let persons = [
 
 // @ GET ALL PERSONS
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    response.status(200).json(persons)
 })
 
 // @ GET INFO PAGE
@@ -38,7 +38,7 @@ app.get('/info', (request, response) => {
     const timestamp = new Date().toString()
     const phonebookInfo = `<p>Phonebook has info for ${entryCount} people</p><p>${timestamp}</p>`
 
-    response.send(phonebookInfo)
+    response.status(200).send(phonebookInfo)
 })
 
 // @ GET PERSON BY ID
@@ -47,9 +47,9 @@ app.get('/api/persons/:id', (request, response) => {
     const person = persons.find(person => person.id === id)
     
     if(person) {
-        response.json(person)
+        response.status(200).json(person)
     } else {
-        response.status(404).end()
+        response.status(404).json({ error: 'Person not found' })
     }
 })
 
@@ -76,11 +76,17 @@ const generateId = () => {
 
 // @ CREATE A PERSON
 app.post('/api/persons', (request, response) => {
+    
     const {name, number} = request.body
+    const errors = []
 
-    if(!name || !number){
-        return response.status(400).json({
-            error: 'content missing'
+    !name && errors.push({ code: 400, message: 'Name is missing' }) // no name
+    !number && errors.push({ code: 400, message: 'Number is missing' }) // no number
+    persons.find(p => p.name === name) && errors.push({ code: 409, message: 'Name must be unique'}) // duplicate name
+    
+    if(errors.length > 0) {
+        return response.status(errors[0].code).json({
+            errors: errors
         })
     }
 
@@ -91,9 +97,10 @@ app.post('/api/persons', (request, response) => {
     }
 
     persons = persons.concat(person)
-    response.json(person)
+    response.status(201).json(person)
 
 })
+
 
 const PORT = 3001
 app.listen(PORT, () => {
