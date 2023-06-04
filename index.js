@@ -32,12 +32,25 @@ app.get('/api/persons', (request, response) => {
     response.json(persons)
 })
 
+// @ GET INFO PAGE
 app.get('/info', (request, response) => {
-  const entryCount = persons.length
-  const timestamp = new Date().toString()
-  const phonebookInfo = `<p>Phonebook has info for ${entryCount} people</p><p>${timestamp}</p>`
+    const entryCount = persons.length
+    const timestamp = new Date().toString()
+    const phonebookInfo = `<p>Phonebook has info for ${entryCount} people</p><p>${timestamp}</p>`
 
-  response.send(phonebookInfo)
+    response.send(phonebookInfo)
+})
+
+// @ GET PERSON BY ID
+app.get('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    const person = persons.find(person => person.id === id)
+    
+    if(person) {
+        response.json(person)
+    } else {
+        response.status(404).end()
+    }
 })
 
 const PORT = 3001
