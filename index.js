@@ -59,9 +59,41 @@ app.delete('/api/persons/:id', (request, response) => {
     persons = persons.filter(person => person.id !== id)
     
     response.status(204).end()
-    console.log(persons)
 })
 
+
+// generate id function
+const generateId = () => {
+    const newId = Math.ceil(Math.random() * 1000)
+    const idMatch = persons.find(p => p.id === newId) 
+
+    if(!idMatch) {
+        return newId  
+    } else {
+        return generateId() // recursion - keeps calling function untill unique id generated
+    }    
+}
+
+// @ CREATE A PERSON
+app.post('/api/persons', (request, response) => {
+    const {name, number} = request.body
+
+    if(!name || !number){
+        return response.status(400).json({
+            error: 'content missing'
+        })
+    }
+
+    const person = {
+        id: generateId(),
+        name: name,
+        number: number,
+    }
+
+    persons = persons.concat(person)
+    response.json(person)
+
+})
 
 const PORT = 3001
 app.listen(PORT, () => {
