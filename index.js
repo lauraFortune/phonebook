@@ -48,10 +48,15 @@ app.get('/api/persons/:id', (request, response) => {
 
 // @ DELETE PERSON BY ID
 app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-    
-    response.status(204).end()
+
+    Person.findByIdAndRemove(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => {
+            console.log(error)
+            response.status(400).send({ error: 'malformatted id' })
+        })
 })
 
 
@@ -99,35 +104,3 @@ const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
-
-
-
-
-
-
-// // @ CREATE A PERSON
-// app.post('/api/persons', (request, response) => {
-    
-//     const {name, number} = request.body
-//     const errors = []
-
-//     !name && errors.push({ code: 400, message: 'Name is missing' }) // no name
-//     !number && errors.push({ code: 400, message: 'Number is missing' }) // no number
-//     persons.find(p => p.name === name) && errors.push({ code: 409, message: 'Name must be unique'}) // duplicate name
-    
-//     if(errors.length > 0) {
-//         return response.status(errors[0].code).json({
-//             errors: errors
-//         })
-//     }
-
-//     const person = {
-//         id: generateId(),
-//         name: name,
-//         number: number,
-//     }
-
-//     persons = persons.concat(person)
-//     response.status(201).json(person)
-
-// })
