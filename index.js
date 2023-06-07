@@ -58,32 +58,8 @@ app.get('/api/persons/:id', (request, response) => {
     }
 })
 
-// @ DELETE PERSON BY ID
-app.delete('/api/persons/:id', (request, response, next) => {
-
-    Person.findByIdAndRemove(request.params.id)
-        .then(result => {
-            response.status(204).end()
-        })
-        .catch(error => next(error))
-})
-
-
-// generate id function
-const generateId = () => {
-    const newId = Math.ceil(Math.random() * 1000)
-    const idMatch = persons.find(p => p.id === newId) 
-
-    if(!idMatch) {
-        return newId  
-    } else {
-        return generateId() // recursion - keeps calling function untill unique id generated
-    }    
-}
-
 // @ CREATE A PERSON
 app.post('/api/persons', (request, response) => {
-    
     const {name, number} = request.body
     const errors = []
 
@@ -98,14 +74,46 @@ app.post('/api/persons', (request, response) => {
         
     }
 
-
     const person = new Person({ name, number })
 
     person.save().then(savedNote => {
         response.status(201).json(savedNote)
     })
 
+})
 
+// @ DELETE PERSON BY ID
+app.delete('/api/persons/:id', (request, response, next) => {
+
+    Person.findByIdAndRemove(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
+})
+
+// generate id function
+const generateId = () => {
+    const newId = Math.ceil(Math.random() * 1000)
+    const idMatch = persons.find(p => p.id === newId) 
+
+    if(!idMatch) {
+        return newId  
+    } else {
+        return generateId() // recursion - keeps calling function untill unique id generated
+    }    
+}
+
+// @ UPDATE PERSON BY ID
+app.put('/api/persons/:id', (request, response, next) => {
+    const {name, number} = request.body
+    const person = { name, number }
+
+    Person.findByIdAndUpdate(request.params.id, person, { new: true })
+        .then(updatedPerson => {
+            response.json(updatedPerson)
+        })
+        .catch(error => next(error))
 })
 
 app.use(unknownEndpoint)
