@@ -33,29 +33,31 @@ const unknownEndpoint = (request, response) => {
 // @ GET ALL PERSONS - MONGOOSE
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {
-        response.json(persons)
+        response.status(200).json(persons)
     })
 })
 
 // @ GET INFO PAGE
-app.get('/info', (request, response) => {
-    const entryCount = persons.length
-    const timestamp = new Date().toString()
-    const phonebookInfo = `<p>Phonebook has info for ${entryCount} people</p><p>${timestamp}</p>`
-
-    response.status(200).send(phonebookInfo)
+app.get('/info', (request, response, next) => {
+    Person.countDocuments({}).then(personCount => {
+        const timestamp = new Date().toDateString()
+        const phonebookInfo = `<p>Phonebook has info for ${personCount} people</p><p>${timestamp}</p>`
+        response.status(200).send(phonebookInfo)
+    })
+    .catch(error => next(error))
 })
 
 // @ GET PERSON BY ID
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
-    
-    if(person) {
-        response.status(200).json(person)
-    } else {
-        response.status(404).json({ error: 'Person not found' })
-    }
+app.get('/api/persons/:id', (request, response, next) => {
+
+    Person.findById(request.params.id).then(person => {
+        if (person) {
+            response.status(200).json(person)
+        } else {
+            response.status(404).end()
+        }
+    })
+    .catch(error => next(error))
 })
 
 // @ CREATE A PERSON
@@ -66,18 +68,15 @@ app.post('/api/persons', (request, response) => {
     !name && errors.push({ code: 400, message: 'Name is missing' }) // no name
     !number && errors.push({ code: 400, message: 'Number is missing' }) // no number
     // persons.find(p => p.name === name) && errors.push({ code: 409, message: 'Name must be unique'}) // duplicate name
-    console.log(response)
     if(errors.length > 0) {
         return response.status(errors[0].code).json({
             message: errors[0].message
         })
-        
     }
 
     const person = new Person({ name, number })
-
-    person.save().then(savedNote => {
-        response.status(201).json(savedNote)
+    person.save().then(createdPerson => {
+        response.status(201).json(createdPerson)
     })
 
 })
@@ -92,17 +91,7 @@ app.delete('/api/persons/:id', (request, response, next) => {
         .catch(error => next(error))
 })
 
-// generate id function
-const generateId = () => {
-    const newId = Math.ceil(Math.random() * 1000)
-    const idMatch = persons.find(p => p.id === newId) 
 
-    if(!idMatch) {
-        return newId  
-    } else {
-        return generateId() // recursion - keeps calling function untill unique id generated
-    }    
-}
 
 // @ UPDATE PERSON BY ID
 app.put('/api/persons/:id', (request, response, next) => {
@@ -111,7 +100,7 @@ app.put('/api/persons/:id', (request, response, next) => {
 
     Person.findByIdAndUpdate(request.params.id, person, { new: true })
         .then(updatedPerson => {
-            response.json(updatedPerson)
+            response.status(200).json(updatedPerson)
         })
         .catch(error => next(error))
 })
@@ -123,3 +112,4 @@ const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
+
