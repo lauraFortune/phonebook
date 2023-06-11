@@ -18,10 +18,15 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 
 // @ HANDLE ERRORS 
 const errorHandler = (error, request, response, next) => {
-    console.log(error.message)
-    if(error.name = 'CastError') {
+  
+    if(error.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' })
     }
+    
+    if(error.name === 'ValidationError'){
+        return response.status(400).json({errors: error.message})
+    }
+
     next(error)
 }
 
@@ -61,23 +66,26 @@ app.get('/api/persons/:id', (request, response, next) => {
 })
 
 // @ CREATE A PERSON
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const {name, number} = request.body
     const errors = []
 
+    // will not even attempt to save a persons details if not all the inputs are completed
     !name && errors.push({ code: 400, message: 'Name is missing' }) // no name
     !number && errors.push({ code: 400, message: 'Number is missing' }) // no number
     // persons.find(p => p.name === name) && errors.push({ code: 409, message: 'Name must be unique'}) // duplicate name
     if(errors.length > 0) {
         return response.status(errors[0].code).json({
-            message: errors[0].message
+            errors: errors.map(error => error.message)
         })
     }
 
     const person = new Person({ name, number })
-    person.save().then(createdPerson => {
-        response.status(201).json(createdPerson)
-    })
+    person.save()
+        .then(createdPerson => {
+            response.status(201).json(createdPerson)
+        })
+        .catch(error => next(error))
 
 })
 
@@ -91,14 +99,16 @@ app.delete('/api/persons/:id', (request, response, next) => {
         .catch(error => next(error))
 })
 
-
-
 // @ UPDATE PERSON BY ID
 app.put('/api/persons/:id', (request, response, next) => {
     const {name, number} = request.body
     const person = { name, number }
 
-    Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    const opts = {
+        new: true,
+        runValidators: true
+    }
+    Person.findByIdAndUpdate(request.params.id, person, opts)
         .then(updatedPerson => {
             response.status(200).json(updatedPerson)
         })
@@ -112,4 +122,3 @@ const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
-
