@@ -68,18 +68,6 @@ app.get('/api/persons/:id', (request, response, next) => {
 // @ CREATE A PERSON
 app.post('/api/persons', (request, response, next) => {
     const {name, number} = request.body
-    const errors = []
-
-    // will not even attempt to save a persons details if not all the inputs are completed
-    !name && errors.push({ code: 400, message: 'Name is missing' }) // no name
-    !number && errors.push({ code: 400, message: 'Number is missing' }) // no number
-    // persons.find(p => p.name === name) && errors.push({ code: 409, message: 'Name must be unique'}) // duplicate name
-    if(errors.length > 0) {
-        return response.status(errors[0].code).json({
-            errors: errors.map(error => error.message)
-        })
-    }
-
     const person = new Person({ name, number })
     person.save()
         .then(createdPerson => {
@@ -122,3 +110,4 @@ const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
+

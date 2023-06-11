@@ -15,15 +15,23 @@ mongoose.connect(url)
     console.log('error connecting to MongoDB:', error.message)
   })
 
+
 const personSchema = mongoose.Schema({
     name: {
       type: String,
       minLength: 5,
-      required: true
+      required: [true, 'User name required']
     },
     number: {
       type: String,
-      required: true
+      minLength: 8,
+      required: [true, 'User phone number required'],
+      validate: {
+        validator: function(v) {
+          return /\d{2,3}-\d{5,}/.test(v)
+        },
+        message: props => `${props.value} is not a valid phone number!`
+      }
     }
 })
 
